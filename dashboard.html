@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akıllı Veri Analiz Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .kpi-label {
+            color: #718096;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .kpi-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .insights-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .insights-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .insight-card {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid;
+            background: #f7fafc;
+        }
+
+        .insight-card.success {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .insight-card.warning {
+            border-left-color: #ed8936;
+            background: #fffaf0;
+        }
+
+        .insight-card.info {
+            border-left-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .insight-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .insight-message {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .priority-critical {
+            background: #feb2b2;
+            color: #742a2a;
+        }
+
+        .priority-high {
+            background: #fbd38d;
+            color: #7c2d12;
+        }
+
+        .priority-medium {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .strategies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .strategy-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .strategy-card h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .strategy-card ul {
+            list-style: none;
+        }
+
+        .strategy-card li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+            color: #4a5568;
+        }
+
+        .strategy-card li:before {
+            content: "✓ ";
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .strategy-card li:last-child {
+            border-bottom: none;
+        }
+
+        .timestamp {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid, .strategies-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Akıllı Veri Analiz Dashboard</h1>
+            <p class="subtitle">Gerçek zamanlı analiz, içgörüler ve stratejik öneriler</p>
+        </header>
+
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>📈 Aylık Gelir Trendi</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>🥧 Kategori Bazlı Gelir Dağılımı</h3>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>📊 Bölgesel Performans</h3>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>⭐ Kategori Performans Matrisi</h3>
+                <div class="chart-container">
+                    <canvas id="bubbleChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="insights-section">
+            <h2>💡 Akıllı İçgörüler ve Analizler</h2>
+            <div id="insightsContainer"></div>
+        </div>
+
+        <div class="insights-section">
+            <h2>🎯 Stratejik Eylem Planları</h2>
+            <div class="strategies-grid" id="strategiesContainer"></div>
+        </div>
+
+        <div class="timestamp" id="timestamp"></div>
+    </div>
+
+    <script>
+        // Örnek veri - Python'dan gelen JSON burada kullanılacak
+        const analysisData = {
+            kpis: {
+                toplam_gelir: 4850000,
+                ortalama_siparis: 1250,
+                toplam_satis: 15420,
+                ortalama_memnuniyet: 4.2,
+                aktif_kategori: 5,
+                aktif_bolge: 5
+            },
+            charts: {
+                monthly_trend: {
+                    labels: ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12'],
+                    data: [380000, 420000, 390000, 450000, 480000, 510000, 490000, 460000, 440000, 410000, 380000, 340000]
+                },
+                category_pie: {
+                    labels: ['Elektronik', 'Giyim', 'Gıda', 'Ev & Yaşam', 'Kozmetik'],
+                    data: [1450000, 1200000, 980000, 780000, 440000]
+                },
+                region_bar: {
+                    labels: ['İstanbul', 'Ankara', 'İzmir', 'Antalya', 'Bursa'],
+                    data: [1680000, 1120000, 890000, 720000, 440000]
+                },
+                category_performance: {
+                    labels: ['Elektronik', 'Giyim', 'Gıda', 'Ev & Yaşam', 'Kozmetik'],
+                    satisfaction: [4.5, 4.2, 4.3, 4.0, 4.1],
+                    margin: [35, 28, 22, 31, 25]
+                }
+            },
+            insights: [
+                {
+                    type: 'warning',
+                    title: '⚠️ Dikkat: Gelir Düşüşü',
+                    message: 'Son 3 ayda gelir %15.2 düştü. Acil aksiyon gerekli! Sezonsal faktörler ve müşteri davranışlarını analiz edin.',
+                    priority: 'critical'
+                },
+                {
+                    type: 'success',
+                    title: '🏆 En İyi Kategori: Elektronik',
+                    message: '₺1,450,000 gelir ile lider. Ortalama memnuniyet: 4.50/5. Büyüme potansiyeli yüksek.',
+                    priority: 'high'
+                },
+                {
+                    type: 'warning',
+                    title: '📉 Zayıf Performans: Kozmetik',
+                    message: 'Sadece ₺440,000 gelir. İyileştirme gerekli. Ürün portföyü ve fiyatlandırma gözden geçirilmeli.',
+                    priority: 'medium'
+                },
+                {
+                    type: 'info',
+                    title: '🌍 En Güçlü Pazar: İstanbul',
+                    message: '₺1,680,000 gelir ile öne çıkıyor. Toplam gelirin %34.6\'sını oluşturuyor.',
+                    priority: 'medium'
+                },
+                {
+                    type: 'success',
+                    title: '💎 Olağanüstü Günler Tespit Edildi',
+                    message: '23 günde normalin çok üstünde satış yapıldı. Bu günlerdeki kampanya ve müşteri davranışları analiz edilmeli.',
+                    priority: 'high'
+                }
+            ],
+            strategies: [
+                {
+                    title: 'Acil Müdahale Planı - Gelir Düşüşü',
+                    actions: [
+                        'Fiyat stratejisini ve rakip analizini gözden geçir',
+                        'Müşteri geri bildirimlerini topla ve analiz et',
+                        'Hedefli promosyon kampanyası başlat (Black Friday hazırlığı)',
+                        'Stok durumu ve tedarik zincirini optimize et'
+                    ]
+                },
+                {
+                    title: 'Elektronik - Büyüme Fırsatı',
+                    actions: [
+                        'Ürün çeşitliliğini artır (akıllı ev cihazları)',
+                        'Premium segment oluştur (flagship ürünler)',
+                        'Cross-selling: aksesuar ve garanti paketleri',
+                        'Sadakat programı ile tekrar alım oranını artır'
+                    ]
+                },
+                {
+                    title: 'Kozmetik - İyileştirme Stratejisi',
+                    actions: [
+                        'Ürün portföyünü güncel trendlere göre revize et',
+                        'A/B testi ile fiyatlandırma optimizasyonu yap',
+                        'Müşteri anketleri ve odak grup çalışmaları düzenle',
+                        'Kârlılık düşükse kategoriden çıkışı değerlendir'
+                    ]
+                },
+                {
+                    title: 'Başarı Faktörleri Analizi',
+                    actions: [
+                        'Yüksek satış günlerindeki kampanyaları dökümante et',
+                        'Müşteri davranış paternlerini ve satın alma zamanlarını mapple',
+                        'Başarılı günlerin özelliklerini (gün, saat, kampanya) tekrarla',
+                        'Sezonsal faktörleri ve tatil günlerini önceden planla'
+                    ]
+                }
+            ],
+            timestamp: '2025-10-04 14:30:00'
+        };
+
+        // KPI kartlarını oluştur
+        function renderKPIs() {
+            const kpiGrid = document.getElementById('kpiGrid');
+            const kpis = [
+                { icon: '💰', label: 'Toplam Gelir', value: `₺${(analysisData.kpis.toplam_gelir / 1000000).toFixed(2)}M` },
+                { icon: '🛒', label: 'Ortalama Sipariş', value: `₺${analysisData.kpis.ortalama_siparis.toLocaleString('tr-TR')}` },
+                { icon: '📦', label: 'Toplam Satış', value: analysisData.kpis.toplam_satis.toLocaleString('tr-TR') },
+                { icon: '⭐', label: 'Müşteri Memnuniyeti', value: `${analysisData.kpis.ortalama_memnuniyet.toFixed(1)}/5.0` },
+                { icon: '🏷️', label: 'Aktif Kategori', value: analysisData.kpis.aktif_kategori },
+                { icon: '🌍', label: 'Aktif Bölge', value: analysisData.kpis.aktif_bolge }
+            ];
+
+            kpis.forEach(kpi => {
+                const card = document.createElement('div');
+                card.className = 'kpi-card';
+                card.innerHTML = `
+                    <div class="kpi-icon">${kpi.icon}</div>
+                    <div class="kpi-label">${kpi.label}</div>
+                    <div class="kpi-value">${kpi.value}</div>
+                `;
+                kpiGrid.appendChild(card);
+            });
+        }
+
+        // Grafikleri oluştur
+        function renderCharts() {
+            // Trend Chart (Line)
+            new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: analysisData.charts.monthly_trend.labels,
+                    datasets: [{
+                        label: 'Aylık Gelir (₺)',
+                        data: analysisData.charts.monthly_trend.data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `₺${context.parsed.y.toLocaleString('tr-TR')}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => `₺${(value/1000)}K`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Pie Chart (Doughnut)
+            new Chart(document.getElementById('pieChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: analysisData.charts.category_pie.labels,
+                    datasets: [{
+                        data: analysisData.charts.category_pie.data,
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe',
+                            '#43e97b'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ₺${value.toLocaleString('tr-TR')} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Bar Chart
+            new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: analysisData.charts.region_bar.labels,
+                    datasets: [{
+                        label: 'Bölgesel Gelir (₺)',
+                        data: analysisData.charts.region_bar.data,
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe',
+                            '#43e97b'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `₺${context.parsed.y.toLocaleString('tr-TR')}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => `₺${(value/1000)}K`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Bubble Chart - Performans Matrisi
+            const perfData = analysisData.charts.category_performance;
+            const bubbleData = perfData.labels.map((label, idx) => ({
+                x: perfData.satisfaction[idx],
+                y: perfData.margin[idx],
+                r: 15
+            }));
+
+            new Chart(document.getElementById('bubbleChart'), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Kategoriler',
+                        data: bubbleData,
+                        backgroundColor: [
+                            'rgba(102, 126, 234, 0.6)',
+                            'rgba(118, 75, 162, 0.6)',
+                            'rgba(240, 147, 251, 0.6)',
+                            'rgba(79, 172, 254, 0.6)',
+                            'rgba(67, 233, 123, 0.6)'
+                        ],
+                        borderColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe',
+                            '#43e97b'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const idx = context.dataIndex;
+                                    return [
+                                        `Kategori: ${perfData.labels[idx]}`,
+                                        `Memnuniyet: ${context.parsed.x.toFixed(2)}/5`,
+                                        `Kar Marjı: %${context.parsed.y.toFixed(1)}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Müşteri Memnuniyeti (1-5)' },
+                            min: 3.5,
+                            max: 5
+                        },
+                        y: {
+                            title: { display: true, text: 'Kar Marjı (%)' },
+                            min: 15,
+                            max: 50
+                        }
+                    }
+                }
+            });
+        }
+
+        // İçgörüleri render et
+        function renderInsights() {
+            const container = document.getElementById('insightsContainer');
+            analysisData.insights.forEach(insight => {
+                const card = document.createElement('div');
+                card.className = `insight-card ${insight.type}`;
+                card.innerHTML = `
+                    <div class="insight-title">${insight.title}</div>
+                    <div class="insight-message">${insight.message}</div>
+                    <span class="priority-badge priority-${insight.priority}">
+                        ${insight.priority === 'critical' ? 'KRİTİK' : 
+                          insight.priority === 'high' ? 'YÜKSEK' : 
+                          insight.priority === 'medium' ? 'ORTA' : 'DÜŞÜK'}
+                    </span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Stratejileri render et
+        function renderStrategies() {
+            const container = document.getElementById('strategiesContainer');
+            analysisData.strategies.forEach(strategy => {
+                const card = document.createElement('div');
+                card.className = 'strategy-card';
+                const actionsList = strategy.actions.map(action => `<li>${action}</li>`).join('');
+                card.innerHTML = `
+                    <h3>${strategy.title}</h3>
+                    <ul>${actionsList}</ul>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Timestamp güncelle
+        function updateTimestamp() {
+            document.getElementById('timestamp').textContent = 
+                `Son Güncelleme: ${analysisData.timestamp}`;
+        }
+
+        // Tüm dashboard'u yükle
+        function initDashboard() {
+            renderKPIs();
+            renderCharts();
+            renderInsights();
+            renderStrategies();
+            updateTimestamp();
+        }
+
+        // Sayfa yüklendiğinde çalıştır
+        window.addEventListener('load', initDashboard);
+    </script>
+</body>
+</html>
